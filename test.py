@@ -9,9 +9,19 @@ import ollama
 import re
 from typing import List
 from pydantic import BaseModel
+from config import (
+    PSQL_DB,
+    PSQL_DB_HOSTNAME,
+    PSQL_DB_PORT,
+    PSQL_DB_PWD,
+    PSQL_DB_USERNAME,
+    PSQL_TABLE,
+    OLLAMA_HOST,
+    OLLAMA_MODEL,
+)
 
-DB_CONN_STR = "postgresql://nfthing_admin:nfthing@157.90.51.8:5432/nfthing"
-MODEL_NAME = "gemma3:27b"
+DB_CONN_STR = f"postgresql://{PSQL_DB_USERNAME}:{PSQL_DB_PWD}@{PSQL_DB_HOSTNAME}:{PSQL_DB_PORT}/{PSQL_DB}"
+MODEL_NAME = OLLAMA_MODEL
 POST_LIMIT = 20
 
 
@@ -46,7 +56,7 @@ async def fetch_posts(pool):
     logger.info("Fetching posts from database")
     query = f"""
     SELECT post_id, type, source, description, content_url, canonical_url, image, handle, time, followers
-    FROM public.social_search_2
+    FROM {PSQL_TABLE}
     WHERE time IS NOT NULL AND description IS NOT NULL
     ORDER BY time DESC LIMIT {POST_LIMIT}
     """
@@ -62,16 +72,17 @@ async def analyze_posts(posts):
     logger.info(f"Analyzing {len(posts)} posts sequentially with model: {MODEL_NAME}")
 
     analyses = []
-    client = ollama.Client(host="http://136.243.7.50:11434")
+    client = ollama.Client(host=OLLAMA_HOST)
 
     for i, post in enumerate(posts, 1):
         logger.info(f"Processing post {i}/{len(posts)}: {post['post_id']}")
-
+        # Can add more label fields here
         prompt = f"""
 Analyze this social media post and determine its Purpose and Tone.
 
 Purpose options: Inform, Request, Opine, Promote, Entertain, Organize, Motivate, Greet
 Tone options: Humorous, Anger, Sorrow, Joy, Positive, Negative, Neutral
+
 
 Post to analyze:
 Post ID: {post["post_id"]}
