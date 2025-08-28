@@ -45,8 +45,8 @@ client = AsyncOpenAI(
 
 # Change system prompt to include label fields if required
 SYSTEM_PROMPT = """You are an expert social media post analyst. Your task is to analyze text and determine:
-1. PURPOSE: What is the main intent or purpose of this text? (one of - Inform, Request, Opine, Promote, Entertain, Organize, Motivate, Greet)
-2. TONE: What is the emotional tone or sentiment? (one of Humorous, Anger, Sorrow, Joy, Positive, Negative, Neutral)
+1. PURPOSE: What is the main intent or purpose of this text? (one, or none of - Inform, Request, Opine, Promote, Entertain, Organize, Motivate, Greet)
+2. TONE: What is the emotional tone or sentiment? (one, or none of - Humorous, Anger, Sorrow, Joy, Positive, Negative, Neutral)
 
 Always respond with valid JSON following the provided schema."""
 
