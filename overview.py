@@ -1,44 +1,19 @@
-import pyarrow as pa
-import pyarrow.parquet as pq
-import os
-import logging
-from typing import Dict, List, Any, Optional
+import pandas as pd
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+df = pd.read_parquet("output.parquet")
+total = len(df)
 
+label_groups = {}
+for col in df.columns:
+    if "_" in col:
+        prefix = col.split("_")[0]
+        if col.startswith(prefix + "_") and df[col].dropna().isin([0, 1]).all():
+            label_groups.setdefault(prefix, []).append(col)
 
-def store_to_parquet(
-    records: List[Dict[str, Any]], filename: str = "output.parquet"
-) -> Optional[str]:
-    try:
-        valid_records = [r for r in records if r is not None]
-
-        if not valid_records:
-            logger.error("No valid records to store")
-            return None
-
-        logger.info(f"Storing {len(valid_records)} records")
-
-        table = pa.Table.from_pydict(
-            {
-                "description": [r["description"] for r in valid_records],
-                # you may add fields here
-                "purpose": [r["purpose"] for r in valid_records],
-                "tone": [r["tone"] for r in valid_records],
-            }
-        )
-
-        if os.path.exists(filename):
-            os.remove(filename)
-
-        pq.write_table(table, filename)
-
-        logger.info(
-            f"✅ Successfully stored {len(valid_records)} records to {filename}"
-        )
-        return filename
-
-    except Exception as e:
-        logger.error(f"Failed to store records: {e}")
-        return None
+print("Total records:", total)
+for group, cols in label_groups.items():
+    counts = df[cols].sum()
+    percents = (counts / total * 100).round(2)
+    print(f"\n{group.capitalize()} label distribution:")
+    for col in cols:
+        print(f"{col}: {counts[col]} ({percents[col]}%)")
